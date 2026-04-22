@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>A10 – Cookie Demo</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:wght@700&display=swap" rel="stylesheet"/>
+  <style>
+    /* ── Design tokens ─────────────────────────────────────── */
+    :root {
+      --bg:        #0d0f14;
+      --surface:   #161b26;
+      --border:    #252c3d;
+      --accent:    #f5c842;
+      --accent2:   #e07b39;
+      --text:      #e8e6df;
+      --muted:     #6b7280;
+      --mono:      'DM Mono', monospace;
+      --serif:     'Playfair Display', serif;
+      --radius:    10px;
+      --transition: 0.3s ease;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--mono);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      background-image:
+        radial-gradient(ellipse at 20% 10%, #1a2236 0%, transparent 55%),
+        radial-gradient(ellipse at 80% 90%, #1e1510 0%, transparent 55%);
+    }
+
+    /* ── Page wrapper ───────────────────────────────────────── */
+    .card {
+      width: 100%;
+      max-width: 640px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 24px 80px rgba(0,0,0,.55);
+      animation: fadeUp .6s ease both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Card header ────────────────────────────────────────── */
+    .card-header {
+      padding: 1.75rem 2rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .cookie-icon {
+      font-size: 2.5rem;
+      line-height: 1;
+      animation: wobble 3s ease-in-out infinite;
+    }
+    @keyframes wobble {
+      0%,100% { transform: rotate(-5deg); }
+      50%      { transform: rotate(5deg); }
+    }
+
+    .header-text h1 {
+      font-family: var(--serif);
+      font-size: 1.6rem;
+      color: var(--accent);
+      line-height: 1.15;
+    }
+    .header-text p {
+      font-size: .78rem;
+      color: var(--muted);
+      margin-top: .35rem;
+      letter-spacing: .04em;
+    }
+
+    /* ── Body ───────────────────────────────────────────────── */
+    .card-body { padding: 2rem; display: flex; flex-direction: column; gap: 1.5rem; }
+
+    label {
+      display: block;
+      font-size: .72rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: .5rem;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: .95rem;
+      padding: .75rem 1rem;
+      outline: none;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    input[type="text"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(245,200,66,.12);
+    }
+    input[type="text"]::placeholder { color: var(--muted); }
+
+    /* Expiry row */
+    .expiry-row { display: flex; gap: 1rem; align-items: flex-end; }
+    .expiry-row > div { flex: 1; }
+    input[type="number"] {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: .95rem;
+      padding: .75rem 1rem;
+      outline: none;
+      transition: border-color var(--transition);
+    }
+    input[type="number"]:focus { border-color: var(--accent); }
+
+    /* Buttons */
+    .btn-row { display: flex; gap: .75rem; }
+
+    button {
+      flex: 1;
+      border: none;
+      border-radius: var(--radius);
+      font-family: var(--mono);
+      font-size: .85rem;
+      letter-spacing: .05em;
+      cursor: pointer;
+      padding: .8rem 1rem;
+      transition: all var(--transition);
+    }
+
+    .btn-set {
+      background: var(--accent);
+      color: #0d0f14;
+      font-weight: 500;
+    }
+    .btn-set:hover { background: #f9d96a; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(245,200,66,.25); }
+    .btn-set:active { transform: translateY(0); }
+
+    .btn-clear {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .btn-clear:hover { border-color: #e05252; color: #e05252; }
+
+    /* ── Cookie display ─────────────────────────────────────── */
+    .cookie-display {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      min-height: 80px;
+      position: relative;
+      transition: border-color .3s;
+    }
+    .cookie-display.has-cookie { border-color: rgba(245,200,66,.35); }
+
+    .cookie-display .display-label {
+      font-size: .65rem;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--muted);
+      margin-bottom: .5rem;
+    }
+
+    #cookie-output {
+      font-size: .9rem;
+      word-break: break-all;
+      color: var(--text);
+    }
+    #cookie-output .cookie-pair {
+      display: flex;
+      align-items: flex-start;
+      gap: .6rem;
+      padding: .3rem 0;
+      border-bottom: 1px solid var(--border);
+      animation: slideIn .25s ease both;
+    }
+    #cookie-output .cookie-pair:last-child { border-bottom: none; }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-8px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    .ck-key   { color: var(--accent); min-width: 90px; flex-shrink: 0; }
+    .ck-eq    { color: var(--muted); }
+    .ck-val   { color: var(--accent2); }
+
+    .empty-msg { color: var(--muted); font-size: .85rem; font-style: italic; }
+
+    /* Status toast */
+    #status {
+      font-size: .78rem;
+      color: var(--accent);
+      min-height: 1.2em;
+      text-align: right;
+      opacity: 0;
+      transition: opacity .3s;
+    }
+    #status.show { opacity: 1; }
+
+    /* ── Footer ─────────────────────────────────────────────── */
+    footer {
+      margin-top: 2rem;
+      font-size: .72rem;
+      color: var(--muted);
+      text-align: center;
+      letter-spacing: .04em;
+    }
+    footer span { color: var(--accent2); }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+
+    <!-- Header -->
+    <div class="card-header">
+      <div class="cookie-icon">🍪</div>
+      <div class="header-text">
+        <h1>Cookie Demo</h1>
+        <p>Set a browser cookie — it persists on reload and is displayed below.</p>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div class="card-body">
+
+      <!-- Cookie name input -->
+      <div>
+        <label for="cookie-name">Cookie name</label>
+        <input type="text" id="cookie-name" placeholder="e.g. username" />
+      </div>
+
+      <!-- Cookie value input -->
+      <div>
+        <label for="cookie-value">Cookie value</label>
+        <input type="text" id="cookie-value" placeholder="e.g. samuel" />
+      </div>
+
+      <!-- Expiry days -->
+      <div class="expiry-row">
+        <div>
+          <label for="cookie-days">Expires in (days)</label>
+          <input type="number" id="cookie-days" value="7" min="0" max="365" />
+        </div>
+      </div>
+
+      <!-- Buttons -->
+      <div class="btn-row">
+        <button class="btn-set" onclick="handleSet()">Set Cookie &amp; Reload</button>
+        <button class="btn-clear" onclick="handleClear()">Clear All Cookies</button>
+      </div>
+
+      <!-- Status line -->
+      <div id="status"></div>
+
+      <!-- Cookie display -->
+      <div>
+        <label>Cookies currently stored in this page</label>
+        <div class="cookie-display" id="display-box">
+          <div id="cookie-output"></div>
+        </div>
+      </div>
+
+    </div><!-- /card-body -->
+  </div><!-- /card -->
+
+  <footer>
+    &copy; <span>April 14, 2025 &mdash; A10</span> &nbsp;|&nbsp; Samuel Olagoke
+  </footer>
+
+  <script>
+    /* ── Cookie utilities (W3Schools pattern) ─────────────── */
+
+    function setCookie(name, value, days) {
+      const d = new Date();
+      d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
+      const expires = "expires=" + d.toUTCString();
+      document.cookie = encodeURIComponent(name) + "=" +
+                        encodeURIComponent(value) + ";" +
+                        expires + ";path=/;SameSite=Lax";
+    }
+
+    function getCookie(name) {
+      const cname = encodeURIComponent(name) + "=";
+      const ca = document.cookie.split(';');
+      for (let c of ca) {
+        c = c.trim();
+        if (c.indexOf(cname) === 0)
+          return decodeURIComponent(c.substring(cname.length));
+      }
+      return "";
+    }
+
+    function getAllCookies() {
+      if (!document.cookie) return [];
+      return document.cookie.split(';').map(pair => {
+        const [k, ...rest] = pair.trim().split('=');
+        return { key: decodeURIComponent(k), val: decodeURIComponent(rest.join('=')) };
+      });
+    }
+
+    function deleteCookie(name) {
+      document.cookie = encodeURIComponent(name) +
+        "=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;SameSite=Lax";
+    }
+
+    /* ── UI helpers ───────────────────────────────────────── */
+
+    function renderCookies() {
+      const out   = document.getElementById('cookie-output');
+      const box   = document.getElementById('display-box');
+      const pairs = getAllCookies();
+
+      if (pairs.length === 0) {
+        box.classList.remove('has-cookie');
+        out.innerHTML = '<span class="empty-msg">No cookies found for this page.</span>';
+        return;
+      }
+
+      box.classList.add('has-cookie');
+      out.innerHTML = pairs.map(p =>
+        `<div class="cookie-pair">
+           <span class="ck-key">${escHtml(p.key)}</span>
+           <span class="ck-eq">=</span>
+           <span class="ck-val">${escHtml(p.val)}</span>
+         </div>`
+      ).join('');
+    }
+
+    function escHtml(str) {
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function showStatus(msg) {
+      const el = document.getElementById('status');
+      el.textContent = msg;
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 2800);
+    }
+
+    /* ── Button handlers ──────────────────────────────────── */
+
+    function handleSet() {
+      const name  = document.getElementById('cookie-name').value.trim();
+      const value = document.getElementById('cookie-value').value.trim();
+      const days  = parseInt(document.getElementById('cookie-days').value, 10) || 7;
+
+      if (!name) { showStatus('⚠ Please enter a cookie name.'); return; }
+
+      setCookie(name, value, days);
+      showStatus(`✓ Cookie "${name}" set (expires in ${days} day${days===1?'':'s'}) — reloading…`);
+
+      // Short delay so the user sees the toast, then reload
+      setTimeout(() => location.reload(), 900);
+    }
+
+    function handleClear() {
+      getAllCookies().forEach(p => deleteCookie(p.key));
+      renderCookies();
+      showStatus('✓ All cookies cleared.');
+    }
+
+    /* ── On page load — show existing cookies ─────────────── */
+    renderCookies();
+  </script>
+
+</body>
+</html>
